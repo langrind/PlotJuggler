@@ -42,7 +42,7 @@ private:
 
     bool _running;
 
-    void pushSingleValue( QJsonObject jobj, const double t, QString & prefix, QString & valueName );
+    void pushSingleValue( QJsonObject jobj, const double t, const QString & valueName );
     void pushSingleCycle(QNetworkDatagram &datagram);
 
     QUdpSocket * _sock;
