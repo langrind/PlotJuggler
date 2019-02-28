@@ -740,6 +740,12 @@ void MainWindow::checkAllCurvesFromLayout(const QDomElement& root)
     }
     if( missing_curves.size() > 0 )
     {
+        // xxx nik: can use the same trick to look up XML to see if we should skip the dialog and
+        // just create the empty curves ... or could I create a data file with one datapoint per
+        // curve and just load data and layout? the layout has so much in it already
+
+        QDomElement empty_placeholders =  root.firstChildElement( "emptyPlaceholders" );
+
         QMessageBox msgBox(this);
         msgBox.setWindowTitle("Warning");
         msgBox.setText(tr("One or more timeseries in the layout haven't been loaded yet\n"
@@ -748,8 +754,11 @@ void MainWindow::checkAllCurvesFromLayout(const QDomElement& root)
         QPushButton* buttonRemove = msgBox.addButton(tr("Remove curves from plots"), QMessageBox::RejectRole);
         QPushButton* buttonPlaceholder = msgBox.addButton(tr("Create empty placeholders"), QMessageBox::YesRole);
         msgBox.setDefaultButton(buttonPlaceholder);
-        msgBox.exec();
-        if( msgBox.clickedButton() == buttonPlaceholder )
+        if( empty_placeholders.isNull() )
+        {
+            msgBox.exec();
+        }
+        if( msgBox.clickedButton() == buttonPlaceholder || !empty_placeholders.isNull() )
         {
             for(auto& name: missing_curves )
             {
@@ -1593,7 +1602,10 @@ void MainWindow::onActionLoadLayoutFromFile(QString filename)
     QDomElement previously_loaded_streamer =  root.firstChildElement( "previouslyLoadedStreamer" );
     if( previously_loaded_streamer.isNull() == false)
     {
+        // Nik: we get here if I add this to the layout file:
+        // <previouslyLoadedStreamer name="DataStreamer_JSON"/>
         QString streamer_name = previously_loaded_streamer.attribute("name");
+        QString streamer_autostart = previously_loaded_streamer.attribute("autostart");
 
         QMessageBox msgBox(this);
         msgBox.setWindowTitle("Start Streaming?");
@@ -1601,8 +1613,15 @@ void MainWindow::onActionLoadLayoutFromFile(QString filename)
         msgBox.addButton(tr("No (Layout only)"), QMessageBox::RejectRole);
         QPushButton* buttonBoth = msgBox.addButton(tr("Yes (Both Layout and Streaming)"), QMessageBox::YesRole);
         msgBox.setDefaultButton(buttonBoth);
-        msgBox.exec();
-        if( msgBox.clickedButton() == buttonBoth )
+
+        // Nik: if I put in the autostart
+        // <previouslyLoadedStreamer name="DataStreamer_JSON" autostart="true" />
+        // then this works to bypass the dialog box:  xxxx need to make it case-insensitive I suppose
+        if( streamer_autostart.isNull() || streamer_autostart != "true" )
+        {
+            msgBox.exec();
+        }
+        if( msgBox.clickedButton() == buttonBoth || streamer_autostart.isNull() == false )
         {
             if( _data_streamer.count(streamer_name) != 0 )
             {
