@@ -740,6 +740,12 @@ void MainWindow::checkAllCurvesFromLayout(const QDomElement& root)
     }
     if( missing_curves.size() > 0 )
     {
+        // langrind: the emptyPlaceholders attribute in the XML layout file allows us to
+        // start PlotJuggler and have it begin displaying a streaming graph immediately.
+        // I can think of a few other ways to do this, and none of them seem perfect, so
+        // going with this one for now
+        QDomElement empty_placeholders =  root.firstChildElement( "emptyPlaceholders" );
+
         QMessageBox msgBox(this);
         msgBox.setWindowTitle("Warning");
         msgBox.setText(tr("One or more timeseries in the layout haven't been loaded yet\n"
@@ -748,8 +754,13 @@ void MainWindow::checkAllCurvesFromLayout(const QDomElement& root)
         QPushButton* buttonRemove = msgBox.addButton(tr("Remove curves from plots"), QMessageBox::RejectRole);
         QPushButton* buttonPlaceholder = msgBox.addButton(tr("Create empty placeholders"), QMessageBox::YesRole);
         msgBox.setDefaultButton(buttonPlaceholder);
-        msgBox.exec();
-        if( msgBox.clickedButton() == buttonPlaceholder )
+        if( empty_placeholders.isNull() )
+        {
+            // Layout file didn't specify, so ask the user
+            msgBox.exec();
+        }
+
+        if( msgBox.clickedButton() == buttonPlaceholder || !empty_placeholders.isNull() )
         {
             for(auto& name: missing_curves )
             {
@@ -1594,6 +1605,7 @@ void MainWindow::onActionLoadLayoutFromFile(QString filename)
     if( previously_loaded_streamer.isNull() == false)
     {
         QString streamer_name = previously_loaded_streamer.attribute("name");
+        QString streamer_autostart = previously_loaded_streamer.attribute("autostart");
 
         QMessageBox msgBox(this);
         msgBox.setWindowTitle("Start Streaming?");
@@ -1601,8 +1613,14 @@ void MainWindow::onActionLoadLayoutFromFile(QString filename)
         msgBox.addButton(tr("No (Layout only)"), QMessageBox::RejectRole);
         QPushButton* buttonBoth = msgBox.addButton(tr("Yes (Both Layout and Streaming)"), QMessageBox::YesRole);
         msgBox.setDefaultButton(buttonBoth);
-        msgBox.exec();
-        if( msgBox.clickedButton() == buttonBoth )
+
+        // langrind:  <previouslyLoadedStreamer name="DataStreamer_JSON" autostart="true" />
+        // So user can start PlogJuggler streaming from a shell script with no dialog box interaction
+        if( streamer_autostart.isNull() || streamer_autostart != "true" )
+        {
+            msgBox.exec();
+        }
+        if( msgBox.clickedButton() == buttonBoth || streamer_autostart.isNull() == false )
         {
             if( _data_streamer.count(streamer_name) != 0 )
             {
