@@ -740,10 +740,10 @@ void MainWindow::checkAllCurvesFromLayout(const QDomElement& root)
     }
     if( missing_curves.size() > 0 )
     {
-        // xxx nik: can use the same trick to look up XML to see if we should skip the dialog and
-        // just create the empty curves ... or could I create a data file with one datapoint per
-        // curve and just load data and layout? the layout has so much in it already
-
+        // langrind: the emptyPlaceholders attribute in the XML layout file allows us to
+        // start PlotJuggler and have it begin displaying a streaming graph immediately.
+        // I can think of a few other ways to do this, and none of them seem perfect, so
+        // going with this one for now
         QDomElement empty_placeholders =  root.firstChildElement( "emptyPlaceholders" );
 
         QMessageBox msgBox(this);
@@ -756,8 +756,10 @@ void MainWindow::checkAllCurvesFromLayout(const QDomElement& root)
         msgBox.setDefaultButton(buttonPlaceholder);
         if( empty_placeholders.isNull() )
         {
+            // Layout file didn't specify, so ask the user
             msgBox.exec();
         }
+
         if( msgBox.clickedButton() == buttonPlaceholder || !empty_placeholders.isNull() )
         {
             for(auto& name: missing_curves )
@@ -1602,8 +1604,6 @@ void MainWindow::onActionLoadLayoutFromFile(QString filename)
     QDomElement previously_loaded_streamer =  root.firstChildElement( "previouslyLoadedStreamer" );
     if( previously_loaded_streamer.isNull() == false)
     {
-        // Nik: we get here if I add this to the layout file:
-        // <previouslyLoadedStreamer name="DataStreamer_JSON"/>
         QString streamer_name = previously_loaded_streamer.attribute("name");
         QString streamer_autostart = previously_loaded_streamer.attribute("autostart");
 
@@ -1614,9 +1614,8 @@ void MainWindow::onActionLoadLayoutFromFile(QString filename)
         QPushButton* buttonBoth = msgBox.addButton(tr("Yes (Both Layout and Streaming)"), QMessageBox::YesRole);
         msgBox.setDefaultButton(buttonBoth);
 
-        // Nik: if I put in the autostart
-        // <previouslyLoadedStreamer name="DataStreamer_JSON" autostart="true" />
-        // then this works to bypass the dialog box:  xxxx need to make it case-insensitive I suppose
+        // langrind:  <previouslyLoadedStreamer name="DataStreamer_JSON" autostart="true" />
+        // So user can start PlogJuggler streaming from a shell script with no dialog box interaction
         if( streamer_autostart.isNull() || streamer_autostart != "true" )
         {
             msgBox.exec();
