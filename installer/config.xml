@@ -5,6 +5,6 @@
     <Title>PlotJuggler installer</Title>
     <Publisher>Davide Faconti</Publisher>
     <StartMenuDir>Applications</StartMenuDir>
-    <TargetDir>@HomeDir@/PlotJuggler</TargetDir>
+    <TargetDir>@ApplicationsDir@/PlotJuggler</TargetDir>
 </Installer>
 
