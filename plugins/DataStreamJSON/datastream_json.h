@@ -41,7 +41,7 @@ private:
     std::thread _thread;
 
     bool _running;
-
+    int  _port;
     void pushSingleValue( QJsonObject jobj, const double t, const QString & valueName );
     void pushSingleCycle(QNetworkDatagram &datagram);
 

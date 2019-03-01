@@ -4,7 +4,7 @@
 #include <QMessageBox>
 #include <QDebug>
 #include <QJsonDocument>
-#include <QJsonArray>
+#include <QInputDialog>
 #include <thread>
 #include <mutex>
 #include <chrono>
@@ -13,23 +13,49 @@
 
 DataStreamJSON::DataStreamJSON()
 {
+    // copied this from example, is it needed?
     dataMap().addNumeric("empty");
-
-    _sock = new QUdpSocket(this);
-    _sock->bind(QHostAddress::LocalHost, 5006);
 }
 
 bool DataStreamJSON::start()
 {
-    _running = true;
-    _thread = std::thread([this](){ this->loop();} );
-    return true;
+    if( !_running )
+    {
+        if( _port <= 0 )
+        {
+            bool ok;
+            _port = QInputDialog::getInt(nullptr, tr(""),
+                                         tr("UDP Port to receive JSON data:"), 5006, 1111, 65535, 1, &ok);
+            if( !ok)
+            {
+                return _running;
+            }
+        }
+
+        if( _port > 0 )
+        {
+            qDebug() << "JSON Streamer receiving on UDP port " << _port;
+            _sock = new QUdpSocket(this);
+            _sock->bind(QHostAddress::LocalHost, _port);
+
+            _running = true;
+            _thread = std::thread([this](){ this->loop();} );
+            return true;
+        }
+    }
+    else
+    {
+        qDebug() << "JSON Streamer already running on port " << _port;
+        QMessageBox::information(nullptr,"Info",QString("JSON Streamer already running on port: %1").arg(_port));
+    }
+    return _running;
 }
 
 void DataStreamJSON::shutdown()
 {
     _running = false;
     if( _thread.joinable()) _thread.join();
+
 }
 
 bool DataStreamJSON::isRunning() const { return _running; }
@@ -41,11 +67,23 @@ DataStreamJSON::~DataStreamJSON()
 
 QDomElement DataStreamJSON::xmlSaveState(QDomDocument &doc) const
 {
-    return QDomElement();
+    QDomElement elem = doc.createElement("networkConfig");
+    elem.setAttribute("port", _port );
+    return elem;
 }
 
 bool DataStreamJSON::xmlLoadState(QDomElement &parent_element)
 {
+    QDomElement network_config =  parent_element.firstChildElement( "networkConfig" );
+    if( !network_config.isNull() )
+    {
+        if( network_config.hasAttribute("port") )
+        {
+            _port = network_config.attribute("port").toInt();
+            return true;
+        }
+    }
+
     return false;
 }
 
@@ -68,7 +106,7 @@ void DataStreamJSON::pushSingleCycle(QNetworkDatagram &datagram)
     QJsonDocument jdoc = QJsonDocument::fromJson(datagram.data());
     QJsonObject jobj = jdoc.object();
 
-	std::lock_guard<std::mutex> lock( mutex() );
+    std::lock_guard<std::mutex> lock( mutex() );
 
     using namespace std::chrono;
     static std::chrono::high_resolution_clock::time_point initial_time = high_resolution_clock::now();
