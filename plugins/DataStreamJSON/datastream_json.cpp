@@ -15,6 +15,8 @@ DataStreamJSON::DataStreamJSON()
 {
     // copied this from example, is it needed?
     dataMap().addNumeric("empty");
+    _running = false;
+    _port    = 0;
 }
 
 bool DataStreamJSON::start()
