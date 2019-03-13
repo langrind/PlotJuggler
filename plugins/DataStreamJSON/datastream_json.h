@@ -2,8 +2,8 @@
 #define DATASTREAM_JSON_H
 
 #include <QtPlugin>
-#include <QUdpSocket>
-#include <QNetworkDatagram>
+#include <QtNetwork/QUdpSocket>
+#include <QtNetwork/QNetworkDatagram>
 #include <thread>
 #include "PlotJuggler/datastreamer_base.h"
 
