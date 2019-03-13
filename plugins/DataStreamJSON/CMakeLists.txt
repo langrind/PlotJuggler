@@ -14,7 +14,7 @@ SET( SRC
     )
 
 add_library(DataStreamJSON SHARED ${SRC} ${UI_SRC}  )
-target_link_libraries(DataStreamJSON  ${Qt5Widgets_LIBRARIES} ${Qt5Xml_LIBRARIES})
+target_link_libraries(DataStreamJSON  ${Qt5Widgets_LIBRARIES} ${Qt5Xml_LIBRARIES} ${Qt5Network_LIBRARIES})
 
 if(COMPILING_WITH_CATKIN)
     install(TARGETS DataStreamJSON
