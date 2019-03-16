@@ -169,11 +169,11 @@ void PlotWidget::buildActions()
 
     _action_zoomOutMaximum = getActionAndIcon("&Zoom Out", ":/icons/resources/light/zoom_max.png" );
     connect(_action_zoomOutMaximum, &QAction::triggered, this, [this]()
-            {
-                zoomOut(true);
-                replot();
-                emit undoableChange();
-            });
+    {
+        zoomOut(true);
+        replot();
+        emit undoableChange();
+    });
 
     _action_zoomOutHorizontally = getActionAndIcon("&Zoom Out Horizontally",
                                                    ":/icons/resources/light/zoom_horizontal.png" );
@@ -298,6 +298,7 @@ void PlotWidget::canvasContextMenuTriggered(const QPoint &pos)
 void PlotWidget::buildLegend()
 {
     _legend = new QwtPlotLegendItem();
+
     _legend->attach( this );
 
     _legend->setRenderHint( QwtPlotItem::RenderAntialiased );
@@ -457,18 +458,20 @@ void PlotWidget::dragEnterEvent(QDragEnterEvent *event)
 
     const QMimeData *mimeData = event->mimeData();
     QStringList mimeFormats = mimeData->formats();
+    _dragging.curves.clear();
+    _dragging.source = event->source();
     for(const QString& format: mimeFormats)
     {
         QByteArray encoded = mimeData->data( format );
         QDataStream stream(&encoded, QIODevice::ReadOnly);
-        _dragging.curves.clear();
-        _dragging.source = event->source();
 
         while (!stream.atEnd())
         {
             QString curve_name;
             stream >> curve_name;
-            _dragging.curves.push_back( curve_name );
+            if(!curve_name.isEmpty()) {
+                _dragging.curves.push_back(curve_name);
+            }
         }
 
         if( format.contains( "curveslist/add_curve") )
@@ -858,8 +861,8 @@ void PlotWidget::reloadPlotData()
 
 void PlotWidget::activateLegend(bool activate)
 {
-//    if( activate ) _legend->attach(this);
-//    else           _legend->detach();
+    //    if( activate ) _legend->attach(this);
+    //    else           _legend->detach();
     _legend->setVisible(activate);
 }
 
@@ -1482,7 +1485,7 @@ bool PlotWidget::eventFilter(QObject *obj, QEvent *event)
                 QApplication::setOverrideCursor(QCursor(QPixmap(":/icons/resources/light/move.png")));
             }
             return false; // send to canvas()
-        }    
+        }
         else if ( mouse_event->buttons() == Qt::MidButton &&
                   mouse_event->modifiers() == Qt::NoModifier )
         {
