@@ -112,7 +112,6 @@ void DataStreamJSON::pushSingleCycle(QNetworkDatagram &datagram)
 
     using namespace std::chrono;
     static std::chrono::high_resolution_clock::time_point initial_time = high_resolution_clock::now();
-    const double offset = duration_cast< duration<double>>( initial_time.time_since_epoch() ).count() ;
     auto now =  high_resolution_clock::now();
     const double t = duration_cast< duration<double>>( now - initial_time ).count() ;
 
@@ -125,7 +124,7 @@ void DataStreamJSON::pushSingleCycle(QNetworkDatagram &datagram)
             dataMap().addNumeric(name_str);
         }
 
-        pushSingleValue( jobj, t + offset, key );
+        pushSingleValue( jobj, t, key );
     }
 }
 

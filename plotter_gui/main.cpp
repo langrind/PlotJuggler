@@ -51,7 +51,10 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
 
     app.setOrganizationName("IcarusTechnology");
-    app.setApplicationName("PlotJuggler");
+    // By not setting an application name, Qt will use the executable name.
+    // I use multiple symbolic links thus allowing me to have multiple
+    // .config/IcarusTechnology/*.conf
+    //app.setApplicationName("PlotJuggler");
 
     // Load an application style
     QFile styleFile( "://style/stylesheet.qss" );
